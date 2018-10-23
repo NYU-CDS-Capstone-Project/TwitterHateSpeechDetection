@@ -106,7 +106,7 @@ for tweet in tweets:
     z= clean_tweet(str(tweet))
     clean_tweets.append(z)
     
-frame['clean_tweet'] = [" ".join(x) for x in clean_tweets]
+frame['clean_tweet'] = clean_tweets
 frame['ID'] = range(0, frame.shape[0])
 
 frame.to_csv('clean_data_nn.csv')
