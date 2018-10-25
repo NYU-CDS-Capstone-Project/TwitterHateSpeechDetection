@@ -82,7 +82,7 @@ def clean_tweet(tweet):
     tweet = tweet.strip()
 
     # Remove @ mention
-    tweet = re.sub(r'RT @[A-Za-z0-9]+', '', tweet)  # Remove the @ mention
+    tweet = re.sub(r'RT @[A-Za-z0-9:]+', '', tweet)  # Remove the @ mention
     tweet = re.sub(r'@[A-Za-z0-9]+', '', tweet)  # Remove the @ mention
     tweet = re.sub(r'&amp+', '', tweet)  # Remove the @ mention
 
@@ -90,7 +90,8 @@ def clean_tweet(tweet):
     tweet = re.sub(r"http\S+", "", tweet).lower()
 
     # Remove Punctuation
-    tweet = ''.join(c for c in tweet if c not in string.punctuation)
+    tweet = nltk.tokenize.word_tokenize(tweet)
+    tweet = ' '.join(c for c in tweet)
 
     # Remove Common English Words (commenting out because not wanted for nn)
     #stop_words = set(stopwords.words('english'))
