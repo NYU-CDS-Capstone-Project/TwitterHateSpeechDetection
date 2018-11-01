@@ -13,6 +13,8 @@ succeed on the remaining labels, but it’s also possible that the labelling is 
 which makes the prediction problem noisier. The graph below represent the mean cross-validation F score for classifier by
 category.
 
+![alt text](https://github.com/NYU-CDS-Capstone-Project/TwitterHateSpeechDetection/blob/master/baseline_models.png)
+
    We’ve also built a recurrent neural network that uses word embeddings pre-trained on Twitter data. The paper [Deep
 Learning for Hate Speech Detection in Tweets](https://arxiv.org/abs/1706.00188) by Badjatiya et al achieved an f-score of
 0.808 with an LSTM and GLoVe embeddings. However, our implementation achieves an f-score of 0.612 detecting hate speech, lower
@@ -24,6 +26,6 @@ the performance.
   
    We’ve discussed the data size issue with the researchers at the Social Justice Lab, and they’ve labelled an additional
 1k tweets (which we haven’t yet incorporated into our model) and promised to add 1k more in the coming weeks. This should
-improve model performance. We may also try using the [Universal Language Model Fine-tuning for Text Classification
+improve model performance. We may also try using the [Universal Language Model Fine-tuning for Text Classification]
 (https://arxiv.org/abs/1801.06146), a transfer learning method which, in some cases, can produce strong results with only a
 few hundred labeled examples.
