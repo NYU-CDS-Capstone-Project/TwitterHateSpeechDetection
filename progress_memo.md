@@ -1,5 +1,5 @@
 # Progress Memo
-# 10/31/18
+## 10/31/18
    
    We have several finished models and have implemented many of the strategies that seemed likely to succeed based on our
 review of the literature. We aren’t yet satisfied with the performance (f-score) of the models we’ve produced. The set of
