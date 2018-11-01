@@ -29,6 +29,7 @@ the performance.
   
    We’ve discussed the data size issue with the researchers at the Social Justice Lab, and they’ve labeled an additional
 1k tweets (which we haven’t yet incorporated into our model) and promised to add 1k more in the coming weeks. This should
-improve model performance. We may also try using the [Universal Language Model Fine-tuning for Text Classification]
-(https://arxiv.org/abs/1801.06146), a transfer learning method which, in some cases, can produce strong results with only a
+improve model performance. We may also try using the 
+[Universal Language Model Fine-tuning for Text Classification](https://arxiv.org/abs/1801.06146), a transfer learning method
+which, in some cases, can produce strong results with only a
 few hundred labeled examples.
