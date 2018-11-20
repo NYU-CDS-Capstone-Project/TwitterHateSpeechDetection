@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+"""to use, write python train.py label where label is the name of the label you want to predict"""
+
 import torch
 import pandas as pd
 import numpy as np
