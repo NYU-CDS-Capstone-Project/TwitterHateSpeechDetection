@@ -15,7 +15,7 @@ class LSTMClassifier(torch.nn.Module):
         self.vocab_size = vocab_size
         self.embedding = torch.nn.Embedding(vocab_size, embedding_dim)
         self.embedding.weight = torch.nn.Parameter(self.weights)
-        self.lstm = torch.nn.LSTM(embedding_dim, hidden_dim, num_layers=1)
+        self.lstm = torch.nn.LSTM(embedding_dim, hidden_dim, num_layers=1, bidirectional = True)
         self.hidden2out = torch.nn.Linear(hidden_dim, output_size)
         self.softmax = torch.nn.LogSoftmax()
         self.dropout_layer = torch.nn.Dropout(p=0.2)

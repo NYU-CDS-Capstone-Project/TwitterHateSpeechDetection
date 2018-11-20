@@ -1,4 +1,4 @@
-# coding: utf-8
+#!/usr/bin/python
 
 import torch
 import pandas as pd
@@ -16,6 +16,7 @@ from utils import *
 from model import *
 from data_loader import *
 import pickle
+import sys
 
 #drew inspiration from
 #https://github.com/dmesquita/understanding_pytorch_nn and
@@ -27,15 +28,23 @@ import pickle
 
 # ## <b> Data Processing<b>
 
-label = 'hatespeech'
+print ('label to predict:', sys.argv[1])
+
+label = sys.argv[1]
 
 train = pd.read_csv("../train_nn.csv")
+
+train = train[train.clean_tweet.isnull() == False]
 
 train_sub, validation = model_selection.train_test_split(train, test_size = 0.2, random_state = 123)
 train_sub.reset_index(inplace = True, drop = True)
 validation.reset_index(inplace = True, drop = True)
 
 vocab_size = 10000
+
+print ('isnull', sum(train_sub.clean_tweet.isnull()))
+
+print ('one_null', train_sub[train_sub.clean_tweet.isnull() == True])
 
 vocab = build_vocab(vocab_size, train_sub.clean_tweet)
 word2index, index2word = build_idx(vocab)
@@ -44,7 +53,11 @@ glove_path = "/Users/carolineroper/Desktop/Capstone Project/Neural Network/glove
 
 glove = load_glove(glove_path)
 
-weights_matrix = build_weights_matrix(glove, index2word, 200)
+my_glove_path = "/Users/carolineroper/Desktop/Capstone Project/glove/vectors.txt"
+
+custom_glove = load_glove(my_glove_path)
+
+weights_matrix = build_weights_matrix(glove, custom_glove, index2word, 200)
 weights = torch.FloatTensor(weights_matrix)
 
 data = VectorizeData(train_sub, word2index, label = label)
@@ -136,13 +149,3 @@ pickle.dump(best_net, open(filename, "wb"))
 final_predictions, val_labels = get_validation_predictions(dl2, best_net)
 
 print ("confusion matrix" + str(confusion_matrix(val_labels, final_predictions)))
-
-'''if __name__ == "  __main__":
-    parser = argparse.ArgumentParser()
-
-    # Data loading parameters
-    parser.add_argument('--label', type=str, default='hatespeech')
-    config = parser.parse_args()
-    print (config)
-    label = config[0]'''
-

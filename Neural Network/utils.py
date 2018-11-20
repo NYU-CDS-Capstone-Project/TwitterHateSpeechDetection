@@ -50,24 +50,30 @@ def load_glove(path):
             glove[word] = vector
         return glove
 
-def build_weights_matrix(vectors, index2word, size = 200):
+def build_weights_matrix(vectors, custom_vectors, index2word, size = 200):
     """
     creates matrix of weights for initializing model
     """
     weights_matrix = np.zeros((len(index2word), size))
     words_found = 0
+    words_found_custom = 0
 
     for i, word in index2word.items():
         try: 
             weights_matrix[i] = vectors[index2word[i]]
             words_found += 1
         except KeyError:
-            weights_matrix[i] = np.random.rand(size)
+            try:
+                weights_matrix[i] = custom_vectors[index2word[i]]
+                words_found_custom +=1
+            except KeyError:
+                weights_matrix[i] = np.random.rand(size)
 
     #initialize pad embedding to zero
     weights_matrix[0, ] = np.zeros(size)
 
-    print ('words_found: ' + str(words_found/len(index2word)))
+    print ('words_found: ' + str(words_found/len(index2word)) + \
+        ' additional_words_found: ' + str(words_found_custom/len(index2word)))
 
     return weights_matrix
 

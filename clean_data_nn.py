@@ -6,7 +6,6 @@ from sklearn import model_selection
 import glob
 import re
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords 
 from collections import Counter
 from itertools import chain
 import string
@@ -33,15 +32,6 @@ b5 = b5.rename(columns = {'hatespeech7namecalaling1':'hatespeech7', 'nanmecallin
 #concatenate batches
 frame = pd.concat([b1, b2, b3, b4, b5], axis = 0)
 
-#nltk.download('stopwords')
-
-def remove_stop_words(tweet):
-    stop_words = set(stopwords.words('english'))
-    word_tokens = word_tokenize(tweet)
-    filtered_sentence = [w for w in word_tokens if not w in stop_words]
-    return filtered_sentence
-
-
 def clean_tweet(tweet):
     # Remover trailing whitespace
     tweet = tweet.strip()
@@ -49,7 +39,11 @@ def clean_tweet(tweet):
     # Remove @ mention
     tweet = re.sub(r'RT @[A-Za-z0-9:_]+', '', tweet)  # Remove the @ mention
     tweet = re.sub(r'@[A-Za-z0-9]+', '', tweet)  # Remove the @ mention
-    tweet = re.sub(r'&amp+', '', tweet)  # Remove the @ mention
+    
+    #Fix html punctuation
+    tweet = re.sub("&amp;", "&", tweet)
+    tweet = re.sub("&lt;", "<", tweet)
+    tweet = re.sub("&gt;", ">", tweet)
 
     # Remove Hyperlinks
     tweet = re.sub(r"http\S+", "", tweet).lower()
@@ -58,13 +52,14 @@ def clean_tweet(tweet):
     tweet = re.sub("#", " ", tweet)
 
     # Separate Punctuation
-    tweet = nltk.tokenize.word_tokenize(tweet)
+    tweet = word_tokenize(tweet)
     tweet = ' '.join(c for c in tweet)
     
     #Remove trailing whitespace after transformation
     tweet = tweet.strip()
 
     return tweet
+
 
 tweets=frame["Tweet"].tolist()
 
@@ -74,15 +69,22 @@ for tweet in tweets:
     clean_tweets.append(z)
     
 frame['clean_tweet'] = clean_tweets
-frame['ID'] = range(0, frame.shape[0])
+frame = frame[frame['clean_tweet'] != ""]
+frame = frame[frame.clean_tweet.isnull() == False]
 
+frame['ID'] = range(0, frame.shape[0])
 frame.reset_index(inplace = True, drop = True)
+
+labels = ['CAPS', 'Obscenity', 'Threat', 'hatespeech', 'namecalling', 'negprejudice', 'noneng', 'porn', 'stereotypes']
+
+for label in labels:
+    cols = [label + str(x) for x in range(1,8)]
+    frame[label + '_num_yes'] = frame[cols].sum(axis = 1)
+    frame[label] = pd.Series(frame[label + '_num_yes'] >= 2).astype(int)
 
 frame.to_csv('clean_data_nn.csv')
 
 train, test = model_selection.train_test_split(frame, test_size = 0.2, random_state = 123)
-
-train = train[train['Tweet'].isnull() == False]
 
 train.to_csv("train_nn.csv")
 
