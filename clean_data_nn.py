@@ -60,7 +60,6 @@ def clean_tweet(tweet):
 
     return tweet
 
-
 tweets=frame["Tweet"].tolist()
 
 clean_tweets= []
@@ -69,11 +68,6 @@ for tweet in tweets:
     clean_tweets.append(z)
     
 frame['clean_tweet'] = clean_tweets
-frame = frame[frame['clean_tweet'] != ""]
-frame = frame[frame.clean_tweet.isnull() == False]
-
-frame['ID'] = range(0, frame.shape[0])
-frame.reset_index(inplace = True, drop = True)
 
 labels = ['CAPS', 'Obscenity', 'Threat', 'hatespeech', 'namecalling', 'negprejudice', 'noneng', 'porn', 'stereotypes']
 
@@ -85,6 +79,18 @@ for label in labels:
 frame.to_csv('clean_data_nn.csv')
 
 train, test = model_selection.train_test_split(frame, test_size = 0.2, random_state = 123)
+
+# these steps alter the number of rows in the dataframe, so they must be run AFTER the split
+# to avoid small changes in the clean_tweet function affecting the split of the data
+train = train[train['clean_tweet'] != ""]
+train = train[train.clean_tweet.isnull() == False]
+train['ID'] = range(0, train.shape[0])
+train.reset_index(inplace = True, drop = True)
+
+test = test[test['clean_tweet'] != ""]
+test = test[test.clean_tweet.isnull() == False]
+test['ID'] = range(0, test.shape[0])
+test.reset_index(inplace = True, drop = True)
 
 train.to_csv("train_nn.csv")
 

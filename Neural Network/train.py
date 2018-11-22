@@ -34,7 +34,15 @@ print ('label to predict:', sys.argv[1])
 
 label = sys.argv[1]
 
-train = pd.read_csv("../train_nn.csv")
+if label == "CAPS":
+    #use original casing of the tweets if predicting caps
+    print ("using original casing of tweets, not lowercased")
+    train = pd.read_csv("../train_nn_caps.csv")
+else:
+    print ("using lowercased tweets")
+    train = pd.read_csv("../train_nn.csv")
+
+print ("example tweet:", train.clean_tweet[0])
 
 train = train[train.clean_tweet.isnull() == False]
 
@@ -43,10 +51,6 @@ train_sub.reset_index(inplace = True, drop = True)
 validation.reset_index(inplace = True, drop = True)
 
 vocab_size = 10000
-
-print ('isnull', sum(train_sub.clean_tweet.isnull()))
-
-print ('one_null', train_sub[train_sub.clean_tweet.isnull() == True])
 
 vocab = build_vocab(vocab_size, train_sub.clean_tweet)
 word2index, index2word = build_idx(vocab)
