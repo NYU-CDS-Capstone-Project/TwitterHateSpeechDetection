@@ -25,11 +25,9 @@ from sklearn import model_selection
 from utils import *
 from model import *
 from data_loader import *
-from copy import deepcopy
 import pickle
 import sys
 np.random.seed(0)
-torch.manual_seed(0)
 
 #drew inspiration from
 #https://github.com/dmesquita/understanding_pytorch_nn and
@@ -65,9 +63,8 @@ weights = open(weights_matrix_filename,"rb")
 weights = pickle.load(weights)
 
 data = VectorizeData(train_sub, word2index, label = label, maxlen = seq_len)
-dl = DataLoader(data, batch_size = 32, shuffle = False, num_workers = 0, drop_last = True)
+dl = DataLoader(data, batch_size = 32, shuffle = False, num_workers = 4, drop_last = True)
 val = VectorizeData(validation, word2index, label = label, maxlen = seq_len)
-dl2 = DataLoader(val, batch_size = 32, shuffle = False, num_workers = 0, drop_last = True)
 
 def get_ratio_of_classes(label):
     return ([train[label].value_counts()[1]/train[label].value_counts()[0], 1])
@@ -114,17 +111,29 @@ for epoch in range(num_epochs):
             print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f'
                    %(epoch+1, num_epochs, i+1, num_batch, loss.data[0]))
         if (i+1) % 12 == 0:
-            #should I pass the evaluation version of the net here?
             net.eval()
+            torch.manual_seed(0)
+            dl2 = DataLoader(val, batch_size = 32, shuffle = False, num_workers = 4, drop_last = True)
             predictions, val_labels = get_validation_predictions(dl2, net)
-            #why is best net not exactly equal to net?
             val_score = f1_score(predictions, val_labels)
             if val_score > max(val_scores):
                 torch.save(net.state_dict(), 'best_rnn_' + label + '.pt')
                 print ('New Val Score ' + str(val_score))
-                print ("Confusion Matrix " + str(confusion_matrix(val_labels, final_predictions)))
                 print ('Best Net Updated Epoch ' + str(epoch + 1) + ' Iteration ' + str(i + 1))
             val_scores.append(val_score)
             net.train()
 
 print ("best validation f-score " + str(max(val_scores)))
+
+best_net = LSTMClassifier(weights, weights.shape[0], hidden_size, hidden_size, 2, batch_size)
+best_net.load_state_dict(torch.load('best_rnn_' + label + '.pt'))
+best_net.eval()
+
+torch.manual_seed(0)
+dl2 = DataLoader(val, batch_size = 32, shuffle = False, num_workers = 4, drop_last = True)
+
+final_predictions, val_labels = get_validation_predictions(dl2, best_net)
+
+print ("confusion matrix " + str(confusion_matrix(val_labels, final_predictions)))
+
+print ("f-score of best_net " + str(f1_score(final_predictions, val_labels)))
