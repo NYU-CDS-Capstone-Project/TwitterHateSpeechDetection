@@ -1,6 +1,14 @@
 #!/usr/bin/python
 
-"""to use, write python train.py label where label is the name of the label you want to predict"""
+"""
+python train.py label dataset weights_matrix_id vocab_size seq_len
+label: name of the label you want to predict
+(e.g. 'CAPS', 'Obscenity', 'Threat', 'hatespeech', 'namecalling', 'negprejudice', 'noneng', 'porn', 'stereotypes')
+dataset: filename of the dataset (e.g. train_nn.csv)
+weights matrix: id in the filename of the weights matrix (e.g. 1)
+vocab_size: size of vocabulary (e.g. 10000)
+seq_len: maximum length of sequences before truncation (e.g. 25)
+"""
 
 import torch
 import pandas as pd
@@ -17,8 +25,11 @@ from sklearn import model_selection
 from utils import *
 from model import *
 from data_loader import *
+from copy import deepcopy
 import pickle
 import sys
+np.random.seed(0)
+torch.manual_seed(0)
 
 #drew inspiration from
 #https://github.com/dmesquita/understanding_pytorch_nn and
@@ -28,21 +39,16 @@ import sys
 #https://medium.com/@martinpella/how-to-use-pre-trained-word-embeddings-in-pytorch-71ca59249f76
 #https://github.com/A-Jacobson/CNN_Sentence_Classification/blob/master/WordVectors.ipynb
 
-# ## <b> Data Processing<b>
-
-print ('label to predict:', sys.argv[1])
+print ('label to predict: ', sys.argv[1])
+print ('data file: ', sys.argv[2])
 
 label = sys.argv[1]
+filename = sys.argv[2]
+weights_matrix_id = sys.argv[3]
+vocab_size = int(sys.argv[4])
+seq_len = int(sys.argv[5])
 
-if label == "CAPS":
-    #use original casing of the tweets if predicting caps
-    print ("using original casing of tweets, not lowercased")
-    train = pd.read_csv("../train_nn_caps.csv")
-else:
-    print ("using lowercased tweets")
-    train = pd.read_csv("../train_nn.csv")
-
-print ("example tweet:", train.clean_tweet[0])
+train = pd.read_csv("../" + str(filename))
 
 train = train[train.clean_tweet.isnull() == False]
 
@@ -50,51 +56,18 @@ train_sub, validation = model_selection.train_test_split(train, test_size = 0.2,
 train_sub.reset_index(inplace = True, drop = True)
 validation.reset_index(inplace = True, drop = True)
 
-vocab_size = 10000
-
 vocab = build_vocab(vocab_size, train_sub.clean_tweet)
 word2index, index2word = build_idx(vocab)
 
-glove_path = "/Users/carolineroper/Desktop/Capstone Project/Neural Network/glove.twitter.27B/glove.twitter.27B.200d.txt"
+weights_matrix_filename = "weights_matrix_" + str(weights_matrix_id) + ".sav"
 
-glove = load_glove(glove_path)
+weights = open(weights_matrix_filename,"rb")
+weights = pickle.load(weights)
 
-my_glove_path = "/Users/carolineroper/Desktop/Capstone Project/glove/vectors.txt"
-
-custom_glove = load_glove(my_glove_path)
-
-weights_matrix = build_weights_matrix(glove, custom_glove, index2word, 200)
-weights = torch.FloatTensor(weights_matrix)
-
-data = VectorizeData(train_sub, word2index, label = label)
-dl = DataLoader(data, batch_size = 32, shuffle = True)
-val = VectorizeData(validation, word2index, label = label)
-dl2 = DataLoader(val, batch_size = 32, shuffle = False)
-
-def sort_batch(X, y, lengths):
-    lengths, indx = lengths.sort(dim=0, descending=True)
-    X = X[indx]
-    y = y[indx]
-    return X, y, lengths
-
-def get_validation_predictions(validation_data_loader, model):
-    predictions = []
-    pred_labels = []
-    #get training predictions
-    it = iter(validation_data_loader)
-    num_batch = len(validation_data_loader) - 1
-    # Loop over all batches
-    for i in range(num_batch):
-        batch_x,batch_y,batch_len = next(it)
-        batch_x,batch_y,batch_len = sort_batch(batch_x,batch_y,batch_len)
-        tweets = Variable(batch_x.transpose(0,1))
-        batch_labels = Variable(batch_y)
-        lengths = batch_len.numpy()
-        outputs = model(tweets, lengths)
-        _, pred = torch.max(outputs.data, 1)
-        predictions.extend(list(pred.numpy()))
-        pred_labels.extend(list(batch_labels.data.numpy()))
-    return predictions, pred_labels
+data = VectorizeData(train_sub, word2index, label = label, maxlen = seq_len)
+dl = DataLoader(data, batch_size = 32, shuffle = False, num_workers = 0, drop_last = True)
+val = VectorizeData(validation, word2index, label = label, maxlen = seq_len)
+dl2 = DataLoader(val, batch_size = 32, shuffle = False, num_workers = 0, drop_last = True)
 
 def get_ratio_of_classes(label):
     return ([train[label].value_counts()[1]/train[label].value_counts()[0], 1])
@@ -104,18 +77,18 @@ learning_rate = 0.001
 batch_size = 32
 weight_balance = torch.Tensor(get_ratio_of_classes(label))
 
-net = LSTMClassifier(weights, weights_matrix.shape[0], hidden_size, hidden_size, 2, batch_size)
+net = LSTMClassifier(weights, weights.shape[0], hidden_size, hidden_size, 2, batch_size)
 
 # Loss and Optimizer
 criterion = nn.NLLLoss(weight_balance)  
 optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
 
 losses = []
-val_scores = []
+val_scores = [0.0]
 
 num_epochs = 5
 
-num_batch = len(dl) - 1
+num_batch = len(dl)
 # Train the Model
 for epoch in range(num_epochs):
     it = iter(dl)
@@ -139,19 +112,19 @@ for epoch in range(num_epochs):
 
         if (i+1) % 6 == 0:
             print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f'
-                   %(epoch+1, num_epochs, i+1, len(train.clean_tweet)//batch_size, loss.data[0]))
+                   %(epoch+1, num_epochs, i+1, num_batch, loss.data[0]))
         if (i+1) % 12 == 0:
+            #should I pass the evaluation version of the net here?
+            net.eval()
             predictions, val_labels = get_validation_predictions(dl2, net)
-            val_scores.append(f1_score(predictions, val_labels))
-            if val_scores[-1] == max(val_scores):
-                best_net = net
+            #why is best net not exactly equal to net?
+            val_score = f1_score(predictions, val_labels)
+            if val_score > max(val_scores):
+                torch.save(net.state_dict(), 'best_rnn_' + label + '.pt')
+                print ('New Val Score ' + str(val_score))
+                print ("Confusion Matrix " + str(confusion_matrix(val_labels, final_predictions)))
                 print ('Best Net Updated Epoch ' + str(epoch + 1) + ' Iteration ' + str(i + 1))
+            val_scores.append(val_score)
+            net.train()
 
-print ("best validation f-score" + str(max(val_scores)))
-
-filename = 'best_rnn_' + label + '.sav'
-pickle.dump(best_net, open(filename, "wb"))
-
-final_predictions, val_labels = get_validation_predictions(dl2, best_net)
-
-print ("confusion matrix" + str(confusion_matrix(val_labels, final_predictions)))
+print ("best validation f-score " + str(max(val_scores)))

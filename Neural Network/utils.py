@@ -4,6 +4,8 @@
 
 from collections import Counter
 import numpy as np
+from torch.autograd import Variable
+import torch
 
 def build_vocab(vocab_size, text_vector):
     """
@@ -76,4 +78,29 @@ def build_weights_matrix(vectors, custom_vectors, index2word, size = 200):
         ' additional_words_found: ' + str(words_found_custom/len(index2word)))
 
     return weights_matrix
+
+def sort_batch(X, y, lengths):
+    lengths, indx = lengths.sort(dim=0, descending=True)
+    X = X[indx]
+    y = y[indx]
+    return X, y, lengths
+
+def get_validation_predictions(validation_data_loader, model):
+    predictions = []
+    pred_labels = []
+    #get training predictions
+    it = iter(validation_data_loader)
+    num_batch = len(validation_data_loader)
+    # Loop over all batches
+    for i in range(num_batch):
+        batch_x,batch_y,batch_len = next(it)
+        batch_x,batch_y,batch_len = sort_batch(batch_x,batch_y,batch_len)
+        tweets = Variable(batch_x.transpose(0,1))
+        batch_labels = Variable(batch_y)
+        lengths = batch_len.numpy()
+        outputs = model(tweets, lengths)
+        _, pred = torch.max(outputs.data, 1)
+        predictions.extend(list(pred.numpy()))
+        pred_labels.extend(list(batch_labels.data.numpy()))
+    return predictions, pred_labels
 
