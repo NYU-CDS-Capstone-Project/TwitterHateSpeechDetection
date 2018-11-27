@@ -44,5 +44,5 @@ def clean_tweet(tweet):
     return tweet
 
 all_tweets['clean_tweet'] = [clean_tweet(x) for x in all_tweets.tweet]
-all_tweets[['clean_tweet']].to_csv("./glove/all_tweets_cleaned.txt", index = False, header = False)
+all_tweets[['clean_tweet']].to_csv("../glove/all_tweets_cleaned.txt", index = False, header = False)
 

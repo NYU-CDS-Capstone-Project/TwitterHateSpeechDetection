@@ -15,9 +15,9 @@ class LSTMClassifier(torch.nn.Module):
         self.vocab_size = vocab_size
         self.embedding = torch.nn.Embedding(vocab_size, embedding_dim)
         self.embedding.weight = torch.nn.Parameter(self.weights)
-        self.lstm = torch.nn.LSTM(embedding_dim, hidden_dim, num_layers=1, bidirectional = True)
+        self.lstm = torch.nn.LSTM(embedding_dim, hidden_dim, num_layers=1)
         self.hidden2out = torch.nn.Linear(hidden_dim, output_size)
-        self.softmax = torch.nn.LogSoftmax()
+        self.softmax = torch.nn.LogSoftmax(dim = 1)
         self.dropout_layer = torch.nn.Dropout(p=0.2)
         self.batch_size = batch_size
     
@@ -27,8 +27,8 @@ class LSTMClassifier(torch.nn.Module):
 
     def forward(self, batch, lengths):
         self.hidden = self.init_hidden(self.batch_size)
-        embeds = self.embedding(batch) 
-        embeds = pack_padded_sequence(embeds, lengths)
+        embeds = self.embedding(batch)
+        embeds = pack_padded_sequence(embeds, lengths, batch_first = False)
         outputs, (ht, ct) = self.lstm(embeds, self.hidden)
         outputs, lengths = pad_packed_sequence(outputs)
         output = self.dropout_layer(ht[-1])

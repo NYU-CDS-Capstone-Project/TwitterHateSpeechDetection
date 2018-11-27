@@ -2,6 +2,7 @@
 
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
+import pandas as pd
 
 def pad_data(s, length):
     padded = np.zeros((length,), dtype = np.int64)
@@ -18,12 +19,12 @@ def get_index(x, word2index):
         return 1
 
 class VectorizeData(Dataset):
-    def __init__(self, df, word2index, label, maxlen=25):
+    def __init__(self, df, word2index, label, maxlen):
         self.df = df
         self.label = label
-        self.df.seq_len = [len(x.split(' ')) for x in self.df['clean_tweet']]
-        self.df.numeric = [[get_index(y, word2index) for y in x.split(' ')] for x in self.df['clean_tweet']]
-        self.df.padded_tweet = [pad_data(x, maxlen) for x in self.df.numeric]
+        self.df.loc[:, 'seq_len'] = [min(len(x.split(' ')), maxlen) for x in self.df['clean_tweet']]
+        self.df.loc[:, 'numeric'] = [[get_index(y, word2index) for y in x.split(' ')] for x in self.df['clean_tweet']]
+        self.df.loc[:, 'padded_tweet'] = pd.Series([pad_data(x, maxlen) for x in self.df.numeric])
 
     def __len__(self):
         return self.df.shape[0]
