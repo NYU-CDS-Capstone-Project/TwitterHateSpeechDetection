@@ -3,6 +3,7 @@
 """
 python create_weights.py filename matrix_id vocab_size
 dataset: filename of the dataset (e.g. train_nn.csv)
+vector filename: filename of the vectors (e.g. vectors_1.txt)
 weights matrix: id in the filename of the weights matrix (e.g. 1)
 vocab_size: size of vocabulary (e.g. 10000)
 """
@@ -18,11 +19,14 @@ import pickle
 import sys
 
 print ('filename:', sys.argv[1])
-print ('matrix id:', sys.argv[2])
+print ('vector filename:', sys.argv[2])
+print ('matrix id:', sys.argv[3])
+print ('vocab size:', sys.argv[4])
 
 filename = sys.argv[1]
-matrix_id = sys.argv[2]
-vocab_size = sys.argv[3]
+vector_filename = sys.argv[2]
+matrix_id = sys.argv[3]
+vocab_size = int(sys.argv[4])
 
 train = pd.read_csv("../" + str(filename))
 
@@ -39,7 +43,7 @@ glove_path = "/Users/carolineroper/Desktop/Capstone Project/Neural Network/glove
 
 glove = load_glove(glove_path)
 
-my_glove_path = "/Users/carolineroper/Desktop/Capstone Project/glove/vectors.txt"
+my_glove_path = "/Users/carolineroper/Desktop/Capstone Project/glove/" + vector_filename
 
 custom_glove = load_glove(my_glove_path)
 

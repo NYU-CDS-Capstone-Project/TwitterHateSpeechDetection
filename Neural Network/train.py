@@ -70,12 +70,13 @@ val = VectorizeData(validation, word2index, label = label, maxlen = seq_len)
 def get_ratio_of_classes(label):
     return ([train[label].value_counts()[1]/train[label].value_counts()[0], 1])
 
-hidden_size = 200
+emb_dim = 200
+hidden_size = 400
 learning_rate = 0.001
 batch_size = 32
 weight_balance = torch.Tensor(get_ratio_of_classes(label))
 
-net = LSTMClassifier(weights, weights.shape[0], hidden_size, hidden_size, 2, batch_size)
+net = LSTMClassifier(weights, weights.shape[0], emb_dim, hidden_size, 2, batch_size)
 
 # Loss and Optimizer
 criterion = nn.NLLLoss(weight_balance)  
@@ -125,7 +126,7 @@ for epoch in range(num_epochs):
 
 print ("best validation f-score " + str(max(val_scores)))
 
-best_net = LSTMClassifier(weights, weights.shape[0], hidden_size, hidden_size, 2, batch_size)
+best_net = LSTMClassifier(weights, weights.shape[0], emb_dim, hidden_size, 2, batch_size)
 best_net.load_state_dict(torch.load('best_rnn_' + label + '.pt'))
 best_net.eval()
 
