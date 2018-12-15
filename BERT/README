@@ -1,0 +1,5 @@
+These files are intended to be run in conjunction with https://github.com/huggingface/pytorch-pretrained-BERT.
+This folder contains 
+(1) files that put our data in an appropriate format to be run with Google BERT
+(2) a modified version of the run_classifier.py that also outputs the f-score
+(3) a bash script to run the models using our best hyperparameters.
