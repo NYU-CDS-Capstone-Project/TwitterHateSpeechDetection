@@ -12,8 +12,8 @@ labels = ['Obscenity', 'Threat', 'hatespeech', 'namecalling', 'negprejudice', 'n
 for label in labels:
 	train_sub_label = train_sub[[label, 'ID', 'clean_tweet']]
 	train_sub_label.columns = ['Quality', '#1 ID', '#1 String']
-	train_sub_label.to_csv("./BERT/DATA/" + label + "/train.tsv", index = False, sep = '\t')
+	train_sub_label.to_csv("./DATA/" + label + "/train.tsv", index = False, sep = '\t')
 
 	validation_label = validation[[label, 'ID', 'clean_tweet']]
 	validation_label.columns = ['Quality', '#1 ID', '#1 String']
-	validation_label.to_csv("./BERT/DATA/" + label + "/dev.tsv", index = False, sep = '\t')
+	validation_label.to_csv("./DATA/" + label + "/dev.tsv", index = False, sep = '\t')
